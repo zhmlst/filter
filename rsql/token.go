@@ -55,4 +55,3 @@ type token struct {
 func (t token) String() string {
 	return fmt.Sprintf("%s%#v", t.Type.String(), t.Literal)
 }
-
