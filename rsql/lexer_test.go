@@ -1,28 +1,9 @@
 package rsql
 
-import "testing"
-
-func lexAll(input string) []token {
-	lxr := newLexer(input)
-	var toks []token
-	for {
-		tok := lxr.Next()
-		toks = append(toks, tok)
-		if tok.Type == tokEOF || tok.Type == tokInvalid {
-			break
-		}
-	}
-	return toks
-}
-
-func compareTokens(a, b []token) bool {
-	for i, t := range a {
-		if t.Type != b[i].Type || t.Literal != b[i].Literal {
-			return false
-		}
-	}
-	return true
-}
+import (
+	"reflect"
+	"testing"
+)
 
 func TestLexer_Next(t *testing.T) {
 	cases := []struct {
@@ -40,13 +21,22 @@ func TestLexer_Next(t *testing.T) {
 		},
 	}
 
+	tokens := func(src string) (tokens []token) {
+		lxr := newLexer(src)
+		for t := lxr.Next(); ; t = lxr.Next() {
+			tokens = append(tokens, t)
+			if t.Type == tokEOF || t.Type == tokInvalid {
+				break
+			}
+		}
+		return
+	}
+
 	for _, c := range cases {
 		t.Run(c.input, func(t *testing.T) {
-			tokens := lexAll(c.input)
-			if !compareTokens(tokens, c.expect) {
-				t.Errorf("has:%v exp:%v", tokens, c.expect)
-			} else {
-				t.Logf("has:%v exp:%v", tokens, c.expect)
+			tokens := tokens(c.input)
+			if !reflect.DeepEqual(tokens, c.expect) {
+				t.Errorf("\ngot: %v\nexp: %v", tokens, c.expect)
 			}
 		})
 	}
