@@ -9,23 +9,23 @@ import (
 //go:generate stringer -type=LogicalOp
 type LogicalOp int
 
-//go:generate stringer -type=ComparisonOp -trimprefix=ComparisonOp
+//go:generate stringer -type=ComparisonOp
 type ComparisonOp int
 
 const (
-	LogicalOpAnd LogicalOp = iota
-	LogicalOpOr
+	And LogicalOp = iota
+	Or
 )
 
 const (
-	ComparisonOpEq ComparisonOp = iota
-	ComparisonOpNe
-	ComparisonOpIn
-	ComparisonOpOut
-	ComparisonOpLt
-	ComparisonOpLe
-	ComparisonOpGt
-	ComparisonOpGe
+	Eq ComparisonOp = iota
+	Ne
+	In
+	Out
+	Lt
+	Le
+	Gt
+	Ge
 )
 
 type Node interface {
