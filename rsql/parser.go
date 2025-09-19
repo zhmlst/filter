@@ -118,6 +118,12 @@ func (p *parser) parsePrimary() (filter.Node, error) {
 				return nil, fmt.Errorf("empty list for membership operator on field %q", field)
 			}
 			for {
+				if !p.curr.Type.match(argument) {
+					return nil, fmt.Errorf("expected argument in membership list for field %q, got %s", field, p.curr.String())
+				}
+				if p.curr.Type == tokTrue || p.curr.Type == tokFalse || p.curr.Type == tokNull {
+					return nil, fmt.Errorf("boolean or null not allowed in membership list for field %q, got %s", field, p.curr.String())
+				}
 				val, err := p.parseLiteral()
 				if err != nil {
 					return nil, err
@@ -136,9 +142,14 @@ func (p *parser) parsePrimary() (filter.Node, error) {
 			return filter.Constraint{Field: field, Operator: compOp, Value: vals}, nil
 		}
 
+		if compTok.match(relation) && (p.curr.Type == tokTrue || p.curr.Type == tokFalse || p.curr.Type == tokNull) {
+			return nil, fmt.Errorf("relation operator %s does not allow boolean or null for field %q, got %s", compTok.String(), field, p.curr.String())
+		}
+
 		if !p.curr.Type.match(argument) {
 			return nil, fmt.Errorf("expected argument after comparison for field %q, got %s", field, p.curr.String())
 		}
+
 		val, err := p.parseLiteral()
 		if err != nil {
 			return nil, err
