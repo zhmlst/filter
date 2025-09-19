@@ -198,7 +198,7 @@ func isIdent(lit string) bool {
 		return false
 	}
 	runes := []rune(lit)
-	if !(unicode.IsLetter(runes[0]) || runes[0] == '_') {
+	if !unicode.IsLetter(runes[0]) && runes[0] != '_' {
 		return false
 	}
 	for _, r := range runes[1:] {
