@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/zhmlst/filter"
+	"github.com/zhmlst/filter/ast"
 )
 
 type parser struct {
@@ -59,30 +59,30 @@ func (p *parser) expect(tt tokenType) error {
 	return nil
 }
 
-func tokenTypeToComparisonOp(t tokenType) (filter.ComparisonOp, error) {
+func tokenTypeToComparisonOp(t tokenType) (ast.CompOp, error) {
 	switch t {
 	case tokEq:
-		return filter.Eq, nil
+		return ast.Eq, nil
 	case tokNe:
-		return filter.Ne, nil
+		return ast.Ne, nil
 	case tokIn:
-		return filter.In, nil
+		return ast.In, nil
 	case tokOut:
-		return filter.Out, nil
+		return ast.Out, nil
 	case tokLt:
-		return filter.Lt, nil
+		return ast.Lt, nil
 	case tokLe:
-		return filter.Le, nil
+		return ast.Le, nil
 	case tokGt:
-		return filter.Gt, nil
+		return ast.Gt, nil
 	case tokGe:
-		return filter.Ge, nil
+		return ast.Ge, nil
 	default:
 		return 0, fmt.Errorf("not a comparison token: %v", t)
 	}
 }
 
-func (p *parser) parsePrimary() (filter.Node, error) {
+func (p *parser) parsePrimary() (ast.Node, error) {
 	switch p.curr.Type {
 	case tokLparen:
 		p.readToken()
@@ -139,7 +139,7 @@ func (p *parser) parsePrimary() (filter.Node, error) {
 				}
 				p.readToken()
 			}
-			return filter.Constraint{Field: field, Operator: compOp, Value: vals}, nil
+			return ast.CompNode{Field: field, Op: compOp, Arg: vals}, nil
 		}
 
 		if compTok.match(relation) && (p.curr.Type == tokTrue || p.curr.Type == tokFalse || p.curr.Type == tokNull) {
@@ -154,13 +154,13 @@ func (p *parser) parsePrimary() (filter.Node, error) {
 		if err != nil {
 			return nil, err
 		}
-		return filter.Constraint{Field: field, Operator: compOp, Value: val}, nil
+		return ast.CompNode{Field: field, Op: compOp, Arg: val}, nil
 	default:
 		return nil, fmt.Errorf("unexpected primary token: %s", p.curr.String())
 	}
 }
 
-func (p *parser) parseExpression(precedence int) (filter.Node, error) {
+func (p *parser) parseExpression(precedence int) (ast.Node, error) {
 	left, err := p.parsePrimary()
 	if err != nil {
 		return nil, err
@@ -181,29 +181,29 @@ func (p *parser) parseExpression(precedence int) (filter.Node, error) {
 			return nil, err
 		}
 
-		var nodes []filter.Node
-		if l, ok := left.(filter.Logical); ok && l.Operator == logOp {
-			nodes = append(nodes, l.Nodes...)
+		var nodes []ast.Node
+		if l, ok := left.(ast.BoolNode); ok && l.Op == logOp {
+			nodes = append(nodes, l.Args...)
 		} else {
 			nodes = append(nodes, left)
 		}
-		if r, ok := right.(filter.Logical); ok && r.Operator == logOp {
-			nodes = append(nodes, r.Nodes...)
+		if r, ok := right.(ast.BoolNode); ok && r.Op == logOp {
+			nodes = append(nodes, r.Args...)
 		} else {
 			nodes = append(nodes, right)
 		}
-		left = filter.Logical{Operator: logOp, Nodes: nodes}
+		left = ast.BoolNode{Op: logOp, Args: nodes}
 	}
 
 	return left, nil
 }
 
-func tokenTypeToLogicalOp(t tokenType) (filter.LogicalOp, error) {
+func tokenTypeToLogicalOp(t tokenType) (ast.BoolOp, error) {
 	switch t {
 	case tokAnd:
-		return filter.And, nil
+		return ast.And, nil
 	case tokOr:
-		return filter.Or, nil
+		return ast.Or, nil
 	default:
 		return 0, fmt.Errorf("not a logical token: %v", t)
 	}
@@ -229,7 +229,7 @@ func precedenceOf(t tokenType) int {
 	}
 }
 
-func Parse(rsql string) (filter.Node, error) {
+func Parse(rsql string) (ast.Node, error) {
 	p := &parser{lexer: newLexer(rsql)}
 	p.readToken()
 	p.readToken()

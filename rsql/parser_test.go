@@ -4,20 +4,20 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/zhmlst/filter"
+	"github.com/zhmlst/filter/ast"
 )
 
 func TestRsql_Parse(t *testing.T) {
 	cases := []struct {
 		input string
-		exp   filter.Node
+		exp   ast.Node
 	}{
 		{
 			`name!=John`,
-			filter.Constraint{
-				Field:    "name",
-				Operator: filter.Ne,
-				Value:    "John",
+			ast.CompNode{
+				Field: "name",
+				Op:    ast.Ne,
+				Arg:   "John",
 			},
 		},
 	}
